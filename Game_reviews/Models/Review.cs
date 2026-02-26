@@ -15,5 +15,5 @@ public class Review
     public int GameId { get; set; }
     public Game Game { get; set; }
 
-    public string UserId { get; set; }
+    public string? UserId { get; set; }
 }

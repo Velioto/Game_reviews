@@ -4,9 +4,9 @@
 
     public string Title { get; set; }
     public string Description { get; set; }
-    public string BannerUrl { get; set; }
+    public string? BannerUrl { get; set; }
     public DateTime ReleaseDate { get; set; }
 
-    public ICollection<GameGenre> GameGenres { get; set; }
-    public ICollection<Review> Reviews { get; set; }
+    public ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }
