@@ -13,7 +13,7 @@ public class Review
     public DateTime CreatedOn { get; set; } = DateTime.Now;
 
     public int GameId { get; set; }
-    public Game Game { get; set; }
+    public Game? Game { get; set; }
 
     public string? UserId { get; set; }
 }
