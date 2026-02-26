@@ -4,10 +4,8 @@
 
 namespace Game_reviews.Data.Migrations
 {
-    /// <inheritdoc />
     public partial class RemoveUserReq : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
@@ -27,14 +25,13 @@ namespace Game_reviews.Data.Migrations
                 oldType: "nvarchar(max)");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
                 name: "UserId",
                 table: "Reviews",
                 type: "nvarchar(max)",
-                nullable: false,
+                nullable: true,
                 defaultValue: "",
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)",
@@ -44,7 +41,7 @@ namespace Game_reviews.Data.Migrations
                 name: "BannerUrl",
                 table: "Games",
                 type: "nvarchar(max)",
-                nullable: false,
+                nullable: true,
                 defaultValue: "",
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)",

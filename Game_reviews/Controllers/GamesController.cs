@@ -34,9 +34,10 @@ namespace Game_reviews.Controllers
             }
 
             var game = await _context.Games
-                    .Include(g => g.GameGenres)
-                    .ThenInclude(gg => gg.Genre)
-                    .FirstOrDefaultAsync(g => g.Id == id);
+               .Include(g => g.GameGenres)
+               .ThenInclude(gg => gg.Genre)
+               .Include(g => g.Reviews)
+               .FirstOrDefaultAsync(m => m.Id == id);
             if (game == null)
             {
                 return NotFound();
