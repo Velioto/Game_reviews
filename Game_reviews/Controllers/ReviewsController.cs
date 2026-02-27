@@ -39,73 +39,42 @@ namespace Game_reviews.Controllers
             return View(review);
         }
 
-        // GET: Reviews/Create  OR  Reviews/Create?gameId=5
-        public async Task<IActionResult> Create(int? gameId)
+        // GET: Reviews/Create 
+        public async Task<IActionResult> Create(int gameId)
         {
-            if (gameId.HasValue)
-            {
-                var game = await _context.Games.FindAsync(gameId.Value);
-                if (game == null) return NotFound();
+            var game = await _context.Games.FindAsync(gameId);
+            if (game == null) return NotFound();
 
-                ViewBag.LockedGameId = game.Id;
-                ViewBag.LockedGameTitle = game.Title;
+            ViewBag.GameTitle = game.Title;
 
-                // Pre-fill GameId so it's present if view uses asp-for
-                return View(new Review { GameId = game.Id });
-            }
-
-            // Fallback: allow selecting game (show Title not Id)
-            ViewData["GameId"] = new SelectList(_context.Games, "Id", "Title");
-            return View();
+            return View(new Review { GameId = game.Id });
         }
 
         // POST: Reviews/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Rating,Comment,GameId")] Review review, int? redirectToGameId)
+        public async Task<IActionResult> Create([Bind("Rating,Comment,GameId")] Review review)
         {
-            // Set server-side fields
             review.CreatedOn = DateTime.UtcNow;
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            review.UserId = userId; // can be null if not logged in (must be nullable in DB)
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(review);
-                await _context.SaveChangesAsync();
-
-                if (redirectToGameId.HasValue)
-                {
-                    return RedirectToAction("Details", "Games", new { id = redirectToGameId.Value });
-                }
-
-                return RedirectToAction(nameof(Index));
-            }
-
-            // IMPORTANT: rehydrate the same UI state on validation failure
-            if (redirectToGameId.HasValue)
-            {
-                var game = await _context.Games.FindAsync(redirectToGameId.Value);
+                var game = await _context.Games.FindAsync(review.GameId);
                 if (game == null) return NotFound();
 
-                ViewBag.LockedGameId = game.Id;
-                ViewBag.LockedGameTitle = game.Title;
-
-                // Make sure GameId stays set
-                review.GameId = game.Id;
-            }
-            else
-            {
-                ViewData["GameId"] = new SelectList(_context.Games, "Id", "Title", review.GameId);
+                ViewBag.GameTitle = game.Title;
+                return View(review);
             }
 
-            return View(review);
+            _context.Add(review);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Details", "Games", new { id = review.GameId });
         }
 
         // GET: Reviews/Edit/5
         public async Task<IActionResult> Edit(int? id)
-        {
+        {   
             if (id == null) return NotFound();
 
             var review = await _context.Reviews.FindAsync(id);

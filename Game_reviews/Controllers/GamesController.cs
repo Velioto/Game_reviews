@@ -22,7 +22,10 @@ namespace Game_reviews.Controllers
         // GET: Games
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Games.ToListAsync());
+            var games = await _context.Games
+                .Include(g => g.Reviews)   // Load reviews for each game
+                .ToListAsync();
+            return View(games);
         }
 
         // GET: Games/Details/5
