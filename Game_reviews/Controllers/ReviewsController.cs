@@ -19,28 +19,11 @@ namespace Game_reviews.Controllers
             _context = context;
         }
 
-        // PUBLIC (or you can lock it): GET: Reviews
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.Reviews.Include(r => r.Game);
-            return View(await applicationDbContext.ToListAsync());
-        }
+       
 
-        // PUBLIC (or you can lock it): GET: Reviews/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
+       
 
-            var review = await _context.Reviews
-                .Include(r => r.Game)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (review == null) return NotFound();
-
-            return View(review);
-        }
-
-        // USER/Admin: GET: Reviews/Create?gameId=5
+        // USER/Admin: GET: Reviews/Create
         [Authorize]
         public async Task<IActionResult> Create(int gameId)
         {
@@ -80,8 +63,8 @@ namespace Game_reviews.Controllers
             return RedirectToAction("Details", "Games", new { id = review.GameId });
         }
 
-        // OPTIONAL: Admin only edit (recommended)
-        [Authorize(Roles = "Admin")]
+        // Edit GET
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -89,35 +72,59 @@ namespace Game_reviews.Controllers
             var review = await _context.Reviews.FindAsync(id);
             if (review == null) return NotFound();
 
+            // Authorization: check if current user is admin or the review's author
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.IsInRole("Admin") && review.UserId != currentUserId)
+            {
+                return Forbid(); // or return Unauthorized() / NotFound() for security through obscurity
+            }
+
             ViewData["GameId"] = new SelectList(_context.Games, "Id", "Title", review.GameId);
             return View(review);
         }
 
-        // OPTIONAL: Admin only edit (recommended)
-        [Authorize(Roles = "Admin")]
+        // EDIT: POST
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Rating,Comment,CreatedOn,GameId,UserId")] Review review)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Rating,Comment")] Review updatedReview) // removed UserId and CreatedOn from Bind
         {
-            if (id != review.Id) return NotFound();
+            if (id != updatedReview.Id) return NotFound();
 
+            // Fetch the original review from the database
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null) return NotFound();
+
+            // Authorization: check again (in case the user tries to edit a different review)
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!User.IsInRole("Admin") && review.UserId != currentUserId)
+            {
+                return Forbid();
+            }
+
+            // Only update allowed fields
             if (ModelState.IsValid)
             {
+                review.Rating = updatedReview.Rating;
+                review.Comment = updatedReview.Comment;
+                // review.CreatedOn remains unchanged; UserId remains unchanged
+
                 try
                 {
-                    _context.Update(review);
+                    _context.Update(review); // This will mark only changed properties as modified
                     await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", "Games", new { id = review.GameId });
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ReviewExists(review.Id)) return NotFound();
                     throw;
                 }
-                return RedirectToAction(nameof(Index));
             }
 
+            // If ModelState is invalid, repopulate ViewData and return the view with the updatedReview (or original review)
             ViewData["GameId"] = new SelectList(_context.Games, "Id", "Title", review.GameId);
-            return View(review);
+            return View(review); // return the original review with errors, or updatedReview if you prefer
         }
 
         // USER/Admin: GET: Reviews/Delete/5 (owner OR admin)

@@ -18,13 +18,31 @@ namespace Game_reviews.Controllers
         }
 
         // PUBLIC: List games
-        public async Task<IActionResult> Index()
+        // PUBLIC: List games (with optional genre filter)
+        public async Task<IActionResult> Index(int[] selectedGenres)
         {
-            var games = await _context.Games
+            var gamesQuery = _context.Games
                 .Include(g => g.Reviews)
-                .ToListAsync();
+                .Include(g => g.GameGenres)
+                    .ThenInclude(gg => gg.Genre)
+                .AsQueryable();
 
-            return View(games);
+            if (selectedGenres != null && selectedGenres.Any())
+            {
+                gamesQuery = gamesQuery.Where(g => g.GameGenres.Any(gg => selectedGenres.Contains(gg.GenreId)));
+            }
+
+            var games = await gamesQuery.ToListAsync();
+            var allGenres = await _context.Genres.ToListAsync();
+
+            var viewModel = new GamesIndexViewModel
+            {
+                Games = games,
+                AllGenres = allGenres,
+                SelectedGenreIds = selectedGenres ?? Array.Empty<int>()
+            };
+
+            return View(viewModel);
         }
 
         // PUBLIC: Game details

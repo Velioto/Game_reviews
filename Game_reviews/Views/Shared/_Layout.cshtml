@@ -3,16 +3,106 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Game_reviews</title>
+    <title>@ViewData["Title"] - Game Reviews</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Game_reviews.styles.css" asp-append-version="true" />
+    <style>
+        /* Global dark navy theme */
+        body {
+            background-color: #0a192f;
+            color: #e0e0e0;
+        }
+
+        /* Navbar – deep navy with gold accents */
+        .navbar {
+            background-color: #051020 !important; /* slightly darker navy */
+            border-bottom: 1px solid #d4af37 !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .navbar-brand {
+            color: #d4af37 !important;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+            .navbar-brand:hover {
+                color: #b49450 !important;
+            }
+
+        .navbar-nav .nav-link {
+            color: #e0e0e0 !important;
+            transition: color 0.2s;
+        }
+
+            .navbar-nav .nav-link:hover {
+                color: #d4af37 !important;
+            }
+
+        /* Navbar toggler – gold */
+        .navbar-toggler {
+            border-color: #d4af37 !important;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+
+        /* Login partial links */
+        .navbar-nav .nav-item .nav-link,
+        .navbar-nav .nav-item form button {
+            color: #e0e0e0 !important;
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            transition: color 0.2s;
+        }
+
+            .navbar-nav .nav-item .nav-link:hover,
+            .navbar-nav .nav-item form button:hover {
+                color: #d4af37 !important;
+                text-decoration: none;
+            }
+
+        /* Focus outlines for accessibility */
+        a:focus-visible,
+        button:focus-visible,
+        .navbar-toggler:focus-visible,
+        .nav-link:focus-visible {
+            outline: 2px solid #d4af37 !important;
+            outline-offset: 2px;
+        }
+
+        /* Container background – transparent so body shows through */
+        .container {
+            background-color: transparent;
+        }
+
+        /* Main content area */
+        main {
+            min-height: calc(100vh - 120px); /* adjust based on navbar + footer if any */
+        }
+
+        /* Optional: style for any Bootstrap buttons that might appear outside our custom ones */
+        .btn-outline-gold {
+            background-color: transparent;
+            border: 1px solid #d4af37;
+            color: #e0e0e0;
+        }
+
+            .btn-outline-gold:hover {
+                background-color: rgba(212, 175, 55, 0.2);
+                border-color: #d4af37;
+                color: #d4af37;
+            }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Games" asp-action="Index">Game_reviews</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Games" asp-action="Index">🎮 Game Reviews</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -20,9 +110,8 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Games" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="" asp-controller="Games" asp-action="Index">Home</a>
                         </li>
-                        
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
@@ -34,12 +123,6 @@
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Game_reviews - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

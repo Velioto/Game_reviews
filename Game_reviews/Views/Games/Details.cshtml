@@ -8,15 +8,172 @@
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
+<style>
+    /* Reuse the same dark blue palette */
+    body {
+        background-color: #0a192f;
+        color: #e0e0e0;
+    }
+
+    /* Headings in gold */
+    h1, h2, h3, h4, h5, h6, .card-title, .display-6 {
+        color: #d4af37;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+
+    /* Cards – dark, with subtle border and shadow */
+    .card {
+        background-color: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(2px);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+        background-color: rgba(10, 25, 47, 0.8) !important;
+        border-bottom: 1px solid #d4af37;
+        color: #d4af37;
+        font-weight: 400;
+    }
+
+    dt {
+        color: #b49450;
+        font-weight: 400;
+    }
+
+    dd {
+        color: #e0e0e0;
+    }
+
+    .badge.bg-warning {
+        background-color: #d4af37 !important;
+        color: #0a192f !important;
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+    }
+
+    .badge.bg-secondary {
+        background-color: #1e2a3a !important;
+        color: #d4af37;
+        border: 1px solid #d4af37;
+        font-weight: 400;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .btn {
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .btn-success, .btn-primary, .btn-outline-primary {
+        background-color: #b49450;
+        border-color: #b49450;
+        color: #0a192f;
+    }
+
+        .btn-success:hover, .btn-primary:hover, .btn-outline-primary:hover {
+            background-color: #d4af37;
+            border-color: #d4af37;
+            color: #0a192f;
+        }
+
+    .btn-outline-success, .btn-outline-primary, .btn-outline-secondary, .btn-outline-danger, .btn-outline-info {
+        background-color: transparent;
+        border-color: #d4af37;
+        color: #e0e0e0;
+    }
+
+        .btn-outline-success:hover, .btn-outline-primary:hover, .btn-outline-secondary:hover, .btn-outline-danger:hover, .btn-outline-info:hover {
+            background-color: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    .btn-outline-danger {
+        border-color: #b49450;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: rgba(180, 148, 80, 0.2);
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    .btn-outline-secondary {
+        border-color: #5a6b7a;
+        color: #b0c4de;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #2a3a4a;
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+    .list-group {
+        background-color: transparent;
+    }
+
+    .list-group-item {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        color: #e0e0e0;
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.5rem;
+    }
+
+        .list-group-item small.text-muted {
+            color: #a0b0c0 !important;
+        }
+
+    a:focus-visible, button:focus-visible, .btn:focus-visible {
+        outline: 2px solid #d4af37;
+        outline-offset: 2px;
+    }
+
+    .card-img-top {
+        border-radius: 0.5rem 0.5rem 0 0;
+        background-color: #1a2a3a;
+    }
+
+    hr {
+        border-color: #d4af37;
+        opacity: 0.3;
+    }
+
+    .text-muted {
+        color: #a0b0c0 !important;
+    }
+
+    /* New style for 16:9 banner container */
+    .banner-container {
+        aspect-ratio: 16 / 9;
+        width: 100%;
+        overflow: hidden;
+        background-color: #1a2a3a; /* matches the fallback color, optional */
+    }
+
+        .banner-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* changed from cover to contain */
+        }
+</style>
+
 <div class="container mt-4">
     <!-- Main Game Card -->
     <div class="card shadow-sm mb-4">
-        <!-- Banner Image -->
+        <!-- Banner Image with 16:9 aspect ratio -->
         @if (!string.IsNullOrEmpty(Model.BannerUrl))
         {
-            <img src="@Model.BannerUrl" class="card-img-top" alt="@Model.Title"
-                 style="max-height: 350px; object-fit: cover; border-radius: 0.375rem 0.375rem 0 0;"
-                 onerror="this.style.display='none'">
+            <div class="banner-container">
+                <img src="@Model.BannerUrl" class="card-img-top" alt="@Model.Title"
+                     onerror="this.style.display='none'">
+            </div>
         }
 
         <div class="card-body">
@@ -100,7 +257,7 @@
 
     <!-- Reviews Section -->
     <div class="card shadow-sm">
-        <div class="card-header bg-white">
+        <div class="card-header">
             <h4 class="mb-0">Reviews</h4>
         </div>
         <div class="card-body">
@@ -123,14 +280,13 @@
                             </div>
 
                             <div class="mt-2">
-                                <a asp-action="Details" asp-controller="Reviews" asp-route-id="@r.Id"
-                                   class="btn btn-sm btn-outline-info">
-                                    ℹ️ Details
-                                </a>
-
                                 @* Delete only for Admin OR owner *@
                                 @if (User.IsInRole("Admin") || (currentUserId != null && r.UserId == currentUserId))
                                 {
+                                    <a asp-action="Edit" asp-controller="Reviews" asp-route-id="@r.Id"
+                                       class="btn btn-sm btn-outline-info">
+                                        Edit
+                                    </a>
                                     <a asp-action="Delete" asp-controller="Reviews" asp-route-id="@r.Id"
                                        class="btn btn-sm btn-outline-danger ms-2">
                                         🗑️ Delete
@@ -143,4 +299,4 @@
             }
         </div>
     </div>
-</div>>
+</div>
