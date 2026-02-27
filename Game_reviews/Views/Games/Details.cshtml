@@ -1,9 +1,11 @@
 ﻿@model Game
 
 @using System.Linq
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = $"{Model.Title} - Details";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 <div class="container mt-4">
@@ -58,20 +60,39 @@
 
             <!-- Action Buttons -->
             <div class="d-flex gap-2 flex-wrap">
-                <a class="btn btn-success"
-                   asp-controller="Reviews"
-                   asp-action="Create"
-                   asp-route-gameId="@Model.Id">
-                    ➕ Add Review
-                </a>
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
-                    ✏️ Edit
-                </a>
+                @* Add Review only if logged in *@
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <a class="btn btn-success"
+                       asp-controller="Reviews"
+                       asp-action="Create"
+                       asp-route-gameId="@Model.Id">
+                        ➕ Add Review
+                    </a>
+                }
+                else
+                {
+                    <a class="btn btn-outline-success"
+                       asp-area="Identity"
+                       asp-page="/Account/Login">
+                        🔐 Login to add review
+                    </a>
+                }
+
+                @* Edit/Delete only for Admin *@
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        ✏️ Edit
+                    </a>
+
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        🗑️ Delete
+                    </a>
+                }
+
                 <a asp-action="Index" class="btn btn-outline-secondary">
                     ← Back to List
-                </a>
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
-                    🗑️ Delete
                 </a>
             </div>
         </div>
@@ -100,11 +121,21 @@
                                 </div>
                                 <small class="text-muted">@r.CreatedOn.ToShortDateString()</small>
                             </div>
+
                             <div class="mt-2">
                                 <a asp-action="Details" asp-controller="Reviews" asp-route-id="@r.Id"
                                    class="btn btn-sm btn-outline-info">
                                     ℹ️ Details
                                 </a>
+
+                                @* Delete only for Admin OR owner *@
+                                @if (User.IsInRole("Admin") || (currentUserId != null && r.UserId == currentUserId))
+                                {
+                                    <a asp-action="Delete" asp-controller="Reviews" asp-route-id="@r.Id"
+                                       class="btn btn-sm btn-outline-danger ms-2">
+                                        🗑️ Delete
+                                    </a>
+                                }
                             </div>
                         </div>
                     }
@@ -112,4 +143,4 @@
             }
         </div>
     </div>
-</div>
+</div>>

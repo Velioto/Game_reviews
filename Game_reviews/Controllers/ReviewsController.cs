@@ -2,10 +2,11 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using Game_reviews.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Game_reviews.Data;
 
 namespace Game_reviews.Controllers
 {
@@ -18,14 +19,14 @@ namespace Game_reviews.Controllers
             _context = context;
         }
 
-        // GET: Reviews
+        // PUBLIC (or you can lock it): GET: Reviews
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Reviews.Include(r => r.Game);
             return View(await applicationDbContext.ToListAsync());
         }
 
-        // GET: Reviews/Details/5
+        // PUBLIC (or you can lock it): GET: Reviews/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -39,23 +40,30 @@ namespace Game_reviews.Controllers
             return View(review);
         }
 
-        // GET: Reviews/Create 
+        // USER/Admin: GET: Reviews/Create?gameId=5
+        [Authorize]
         public async Task<IActionResult> Create(int gameId)
         {
             var game = await _context.Games.FindAsync(gameId);
             if (game == null) return NotFound();
 
             ViewBag.GameTitle = game.Title;
-
             return View(new Review { GameId = game.Id });
         }
 
-        // POST: Reviews/Create
+        // USER/Admin: POST: Reviews/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Rating,Comment,GameId")] Review review)
         {
+            // Server-side fields
             review.CreatedOn = DateTime.UtcNow;
+            review.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // If for some reason UserId is null even though [Authorize], treat as forbidden
+            if (string.IsNullOrEmpty(review.UserId))
+                return Forbid();
 
             if (!ModelState.IsValid)
             {
@@ -72,9 +80,10 @@ namespace Game_reviews.Controllers
             return RedirectToAction("Details", "Games", new { id = review.GameId });
         }
 
-        // GET: Reviews/Edit/5
+        // OPTIONAL: Admin only edit (recommended)
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
-        {   
+        {
             if (id == null) return NotFound();
 
             var review = await _context.Reviews.FindAsync(id);
@@ -84,7 +93,8 @@ namespace Game_reviews.Controllers
             return View(review);
         }
 
-        // POST: Reviews/Edit/5
+        // OPTIONAL: Admin only edit (recommended)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Rating,Comment,CreatedOn,GameId,UserId")] Review review)
@@ -110,7 +120,8 @@ namespace Game_reviews.Controllers
             return View(review);
         }
 
-        // GET: Reviews/Delete/5
+        // USER/Admin: GET: Reviews/Delete/5 (owner OR admin)
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -121,22 +132,38 @@ namespace Game_reviews.Controllers
 
             if (review == null) return NotFound();
 
+            // Admin can delete anything
+            if (User.IsInRole("Admin"))
+                return View(review);
+
+            // User can delete only their own review
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (review.UserId != userId)
+                return Forbid();
+
             return View(review);
         }
 
-        // POST: Reviews/Delete/5
+        // USER/Admin: POST: Reviews/Delete/5 (owner OR admin)
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var review = await _context.Reviews.FindAsync(id);
-            if (review != null)
+            if (review == null) return NotFound();
+
+            if (!User.IsInRole("Admin"))
             {
-                _context.Reviews.Remove(review);
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (review.UserId != userId)
+                    return Forbid();
             }
 
+            _context.Reviews.Remove(review);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return RedirectToAction("Details", "Games", new { id = review.GameId });
         }
 
         private bool ReviewExists(int id)
