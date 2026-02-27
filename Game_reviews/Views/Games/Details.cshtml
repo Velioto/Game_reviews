@@ -1,48 +1,115 @@
 ﻿@model Game
 
+@using System.Linq
+
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = $"{Model.Title} - Details";
 }
 
-<h1>Details</h1>
+<div class="container mt-4">
+    <!-- Main Game Card -->
+    <div class="card shadow-sm mb-4">
+        <!-- Banner Image -->
+        @if (!string.IsNullOrEmpty(Model.BannerUrl))
+        {
+            <img src="@Model.BannerUrl" class="card-img-top" alt="@Model.Title"
+                 style="max-height: 350px; object-fit: cover; border-radius: 0.375rem 0.375rem 0 0;"
+                 onerror="this.style.display='none'">
+        }
 
-<div>
-    <h4>Game</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BannerUrl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BannerUrl)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ReleaseDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ReleaseDate)
-        </dd>
-    </dl>
-    <h4>Genres</h4>
+        <div class="card-body">
+            <h1 class="card-title display-6">@Model.Title</h1>
 
-    @foreach (var gg in Model.GameGenres)
-    {
-        <span>@gg.Genre.Name</span>
-    }
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+            <!-- Game Details as Definition List -->
+            <dl class="row mt-3">
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Description)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Description)</dd>
+
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ReleaseDate)</dt>
+                <dd class="col-sm-9">
+                    @Model.ReleaseDate.ToShortDateString()
+                </dd>
+
+                <dt class="col-sm-3">Average Rating</dt>
+                <dd class="col-sm-9">
+                    @{
+                        var avgRating = Model.Reviews != null && Model.Reviews.Any()
+                        ? Model.Reviews.Average(r => r.Rating).ToString("0.0")
+                        : "No ratings";
+                    }
+                    <span class="badge bg-warning text-dark">⭐ @avgRating</span>
+                </dd>
+
+                <dt class="col-sm-3">Genres</dt>
+                <dd class="col-sm-9">
+                    @if (Model.GameGenres != null && Model.GameGenres.Any())
+                    {
+                        foreach (var gg in Model.GameGenres)
+                        {
+                            <span class="badge bg-secondary me-1">@gg.Genre.Name</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not specified</span>
+                    }
+                </dd>
+            </dl>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-success"
+                   asp-controller="Reviews"
+                   asp-action="Create"
+                   asp-route-gameId="@Model.Id">
+                    ➕ Add Review
+                </a>
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                    ✏️ Edit
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    ← Back to List
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                    🗑️ Delete
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Reviews</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.Reviews == null || !Model.Reviews.Any())
+            {
+                <p class="text-muted mb-0">No reviews yet. Be the first to review this game!</p>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var r in Model.Reviews.OrderByDescending(x => x.CreatedOn))
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge bg-warning text-dark">⭐ @r.Rating / 10</span>
+                                    <p class="mb-1 mt-2">@r.Comment</p>
+                                </div>
+                                <small class="text-muted">@r.CreatedOn.ToShortDateString()</small>
+                            </div>
+                            <div class="mt-2">
+                                <a asp-action="Details" asp-controller="Reviews" asp-route-id="@r.Id"
+                                   class="btn btn-sm btn-outline-info">
+                                    ℹ️ Details
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
 </div>
