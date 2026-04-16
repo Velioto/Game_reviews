@@ -235,6 +235,32 @@
                         🔐 Login to add review
                     </a>
                 }
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    @if (!(bool)ViewBag.IsOwned)
+                    {
+                        <form asp-action="Buy" method="post">
+                            <input type="hidden" name="gameId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-primary">
+                                🛒 Buy Game
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-action="Library" class="btn btn-success">
+                            📚 View in Library
+                        </a>
+                    }
+                }
+                else
+                {
+                    <a class="btn btn-outline-primary"
+                       asp-area="Identity"
+                       asp-page="/Account/Login">
+                        🔐 Login to purchase
+                    </a>
+                }
 
                 @* Edit/Delete only for Admin *@
                 @if (User.IsInRole("Admin"))

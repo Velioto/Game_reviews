@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace Game_reviews.Controllers
 {
@@ -12,14 +14,17 @@ namespace Game_reviews.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public GamesController(ApplicationDbContext context)
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public GamesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // PUBLIC: List games
         // PUBLIC: List games (with optional genre filter)
-        public async Task<IActionResult> Index(int[] selectedGenres)
+        public async Task<IActionResult> Index(int[] selectedGenres, string? searchQuery)
         {
             var gamesQuery = _context.Games
                 .Include(g => g.Reviews)
@@ -27,19 +32,46 @@ namespace Game_reviews.Controllers
                     .ThenInclude(gg => gg.Genre)
                 .AsQueryable();
 
+            // Genre filter
             if (selectedGenres != null && selectedGenres.Any())
             {
-                gamesQuery = gamesQuery.Where(g => g.GameGenres.Any(gg => selectedGenres.Contains(gg.GenreId)));
+                gamesQuery = gamesQuery.Where(g =>
+                    g.GameGenres.Any(gg => selectedGenres.Contains(gg.GenreId)));
+            }
+
+            // 🔍 Search filter (Title + Description)
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                gamesQuery = gamesQuery.Where(g =>
+                    EF.Functions.Like(g.Title, $"%{searchQuery}%") ||
+                    EF.Functions.Like(g.Description, $"%{searchQuery}%"));
             }
 
             var games = await gamesQuery.ToListAsync();
             var allGenres = await _context.Genres.ToListAsync();
 
+            var userId = User.Identity.IsAuthenticated
+    ? _userManager.GetUserId(User)
+    : null;
+
+            var ownedGameIds = new HashSet<int>();
+
+            if (userId != null)
+            {
+                ownedGameIds = (await _context.UserGames
+                    .Where(ug => ug.UserId == userId)
+                    .Select(ug => ug.GameId)
+                    .ToListAsync())
+                    .ToHashSet();
+            }
+
             var viewModel = new GamesIndexViewModel
             {
                 Games = games,
                 AllGenres = allGenres,
-                SelectedGenreIds = selectedGenres ?? Array.Empty<int>()
+                SelectedGenreIds = selectedGenres ?? Array.Empty<int>(),
+                SearchQuery = searchQuery,
+                OwnedGameIds = ownedGameIds
             };
 
             return View(viewModel);
@@ -57,6 +89,19 @@ namespace Game_reviews.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (game == null) return NotFound();
+
+            // 👇 NEW: check ownership
+            bool isOwned = false;
+
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+
+                isOwned = await _context.UserGames
+                    .AnyAsync(ug => ug.UserId == userId && ug.GameId == game.Id);
+            }
+
+            ViewBag.IsOwned = isOwned;
 
             return View(game);
         }
@@ -176,5 +221,85 @@ namespace Game_reviews.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // USER: Buy game
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Buy(int gameId)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var exists = await _context.UserGames
+                .AnyAsync(x => x.UserId == userId && x.GameId == gameId);
+
+            if (!exists)
+            {
+                _context.UserGames.Add(new UserGame
+                {
+                    UserId = userId,
+                    GameId = gameId
+                });
+
+                await _context.SaveChangesAsync();
+
+                // 👇 Get game title for message
+                var gameTitle = await _context.Games
+                    .Where(g => g.Id == gameId)
+                    .Select(g => g.Title)
+                    .FirstOrDefaultAsync();
+
+                TempData["SuccessMessage"] = $"Success! You can now view \"{gameTitle}\" in your library!";
+            }
+
+            return RedirectToAction("Details", new { id = gameId });
+        }
+
+        // USER: View library (owned games)
+        [Authorize]
+        public async Task<IActionResult> Library(int[] selectedGenres, string? searchQuery)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var gamesQuery = _context.UserGames
+                .Where(ug => ug.UserId == userId)
+                .Include(ug => ug.Game)
+                    .ThenInclude(g => g.Reviews)
+                .Include(ug => ug.Game)
+                    .ThenInclude(g => g.GameGenres)
+                        .ThenInclude(gg => gg.Genre)
+                .Select(ug => ug.Game)
+                .AsQueryable();
+
+            // Genre filter
+            if (selectedGenres != null && selectedGenres.Any())
+            {
+                gamesQuery = gamesQuery.Where(g =>
+                    g.GameGenres.Any(gg => selectedGenres.Contains(gg.GenreId)));
+            }
+
+            // Search
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                gamesQuery = gamesQuery.Where(g =>
+                    EF.Functions.Like(g.Title, $"%{searchQuery}%") ||
+                    EF.Functions.Like(g.Description ?? "", $"%{searchQuery}%"));
+            }
+
+            var games = await gamesQuery.ToListAsync();
+            var allGenres = await _context.Genres.ToListAsync();
+
+            var viewModel = new GamesIndexViewModel
+            {
+                Games = games,
+                AllGenres = allGenres,
+                SelectedGenreIds = selectedGenres ?? Array.Empty<int>(),
+                SearchQuery = searchQuery,
+                OwnedGameIds = games.Select(g => g.Id).ToHashSet()
+            };
+
+            return View(viewModel);
+        }
+
+
     }
 }

@@ -16,7 +16,7 @@ namespace Game_reviews.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Genre> Genres { get; set; }
         public DbSet<GameGenre> GameGenres { get; set; }
-
+        public DbSet<UserGame> UserGames { get; set; }
         // ===== MANY TO MANY CONFIG =====
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -34,6 +34,14 @@ namespace Game_reviews.Data
                 .HasOne(gg => gg.Genre)
                 .WithMany(g => g.GameGenres)
                 .HasForeignKey(gg => gg.GenreId);
+
+            builder.Entity<UserGame>()
+                .HasKey(ug => new { ug.UserId, ug.GameId });
+
+            builder.Entity<UserGame>()
+                .HasOne(ug => ug.Game)
+                .WithMany()
+                .HasForeignKey(ug => ug.GameId);
         }
     }
 }

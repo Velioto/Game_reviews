@@ -7,5 +7,9 @@ namespace Game_reviews.Models
         public IEnumerable<Game> Games { get; set; }
         public List<Genre> AllGenres { get; set; }
         public int[] SelectedGenreIds { get; set; }
+
+        public string? SearchQuery { get; set; }
+
+        public HashSet<int> OwnedGameIds { get; set; } = new();
     }
 }
