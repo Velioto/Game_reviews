@@ -63,6 +63,7 @@ static async Task SeedRolesAndAdminAsync(IServiceProvider services)
 {
     const string ADMIN_ROLE = "Admin";
     const string USER_ROLE = "User";
+    const string GAMEDEV_ROLE = "GameDev";
 
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
@@ -72,6 +73,9 @@ static async Task SeedRolesAndAdminAsync(IServiceProvider services)
 
     if (!await roleManager.RoleExistsAsync(USER_ROLE))
         await roleManager.CreateAsync(new IdentityRole(USER_ROLE));
+
+    if (!await roleManager.RoleExistsAsync(GAMEDEV_ROLE))
+        await roleManager.CreateAsync(new IdentityRole(GAMEDEV_ROLE));
 
     // Default admin user
     var adminEmail = "admin@game.local";
