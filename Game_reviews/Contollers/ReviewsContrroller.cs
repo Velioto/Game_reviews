@@ -19,9 +19,9 @@ namespace Game_reviews.Controllers
             _context = context;
         }
 
-       
 
-       
+
+
 
         // USER/Admin: GET: Reviews/Create
         [Authorize]

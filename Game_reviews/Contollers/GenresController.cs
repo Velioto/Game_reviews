@@ -26,7 +26,7 @@ namespace Game_reviews.Controllers
             return View(await _context.Genres.ToListAsync());
         }
 
-        
+
 
         // GET: Genres/Create
         public IActionResult Create(string returnUrl = null)

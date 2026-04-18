@@ -18,6 +18,7 @@ namespace Game_reviews.Data
         public DbSet<GameGenre> GameGenres { get; set; }
         public DbSet<UserGame> UserGames { get; set; }
         public DbSet<GameDevRoleRequest> GameDevRoleRequests { get; set; }
+        public DbSet<AddGameRequest> AddGameRequests { get; set; }
 
         // ===== MANY TO MANY CONFIG =====
         protected override void OnModelCreating(ModelBuilder builder)
